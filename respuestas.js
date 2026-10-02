@@ -1,0 +1,2 @@
+// Generado por tools/generar.py — no editar a mano
+window.RESPUESTAS = "Ni07Iz8lNSY9IDsyKmZqIz8mJCcvOycmJDcgK3d7KjgsPzo3MysgLCA6Jnt3LyUgPiExPS87NiAyMXtsLzwsMSowJiwgJiYwKn58NiAuKSYsMyI6Lic3IX15JTkuIiAsPTE7IiAgImh5PyIoMSw6NywiNiI5J3NqLyAgMyEmPyo6Kio/N3N6JyUjNS0=";

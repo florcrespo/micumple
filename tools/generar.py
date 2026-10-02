@@ -121,6 +121,15 @@ out = {"rows": H, "cols": W, "mask": mask, "entries": entries,
 with open(os.path.join(ROOT, "crucigrama.js"), "w", encoding="utf-8") as f:
     f.write("// Generado por tools/generar.py — no editar a mano\n")
     f.write("window.CRUCIGRAMA = " + json.dumps(out, ensure_ascii=False, indent=1) + ";\n")
+
+# Respuestas ofuscadas (solo se cargan cuando alguien abandona)
+import base64
+KEY = b"flopicretense28"
+sol_bytes = solution.encode("utf-8")
+enc = base64.b64encode(bytes(b ^ KEY[i % len(KEY)] for i, b in enumerate(sol_bytes))).decode()
+with open(os.path.join(ROOT, "respuestas.js"), "w", encoding="utf-8") as f:
+    f.write("// Generado por tools/generar.py — no editar a mano\n")
+    f.write("window.RESPUESTAS = " + json.dumps(enc) + ";\n")
 for r in range(H):
     print(" ".join(grid.get((r + r0, c + c0), ".") for c in range(W)))
 print(W, "x", H, len(placed), "palabras")

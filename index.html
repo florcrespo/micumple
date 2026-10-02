@@ -191,6 +191,24 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
 .empty { color: var(--soft); margin-top: 18px; }
 .conn { font-size: 12px; color: var(--soft); margin-top: 14px; }
 
+.quitbtn { display: block; margin: 18px auto 4px; background: none; border: 2px solid var(--ink); border-radius: 999px; padding: 9px 22px; font: 500 16px Jost, sans-serif; cursor: pointer; }
+.confirm-in { text-align: center; padding-top: 22px; }
+.confirm-in p { font-size: 18px; margin: 4px 0 6px; }
+.confirm-in .btn { margin: 10px 6px 0; padding: 11px 24px; font-size: 18px; }
+#quit { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; padding: 40px 16px 32px; text-align: center; }
+.gas { font-family: Rubik, sans-serif; font-weight: 900; font-size: clamp(24px, 7.6vw, 46px); line-height: 1.05; color: var(--red); margin: 18px 0 8px; overflow-wrap: anywhere;
+  text-shadow: 3px 3px 0 #fff, -3px -3px 0 #fff, 3px -3px 0 #fff, -3px 3px 0 #fff, 0 4px 0 #fff, 0 -4px 0 #fff, 4px 0 0 #fff, -4px 0 0 #fff; }
+.flag { font-size: 64px; animation: wave 1.6s ease-in-out infinite; transform-origin: 20% 90%; }
+@keyframes wave { 50% { transform: rotate(-12deg); } }
+#game .reveal-only { display: none; }
+#game.reveal .reveal-only { display: inline-block; }
+#game.reveal .play-only, #game.reveal .kb { display: none; }
+#game.reveal .cluebar { margin-bottom: calc(10px + env(safe-area-inset-bottom)); }
+.cell.on.miss { color: var(--red); }
+#game.reveal .legend { display: block; }
+.legend { font-size: 13px; color: var(--soft); text-align: center; margin: 0 8px 6px; }
+.legend b { color: var(--red); }
+
 #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
 </style>
 </head>
@@ -251,13 +269,15 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
   <div class="topbar">
     <div class="title">flopi<span>cretense</span></div>
     <div class="stats">
-      <span class="pill" id="progress">0/28</span>
-      <span class="pill" id="timer">0:00</span>
+      <span class="pill play-only" id="progress">0/28</span>
+      <span class="pill play-only" id="timer">0:00</span>
+      <button class="pill reveal-only" id="answersBack" style="cursor:pointer">‹ volver</button>
       <button class="iconbtn" id="zoomBtn" aria-label="Agrandar la grilla">🔍</button>
       <button class="iconbtn" id="listBtn" aria-label="Ver todas las pistas">☰</button>
     </div>
   </div>
   <div class="board-wrap" id="boardWrap"><div class="board" id="board"></div></div>
+  <p class="legend reveal-only" id="legend">En <b>rojo</b>, las letras que te faltaban o tenías mal.</p>
   <div class="cluebar">
     <button id="prevClue" aria-label="Pista anterior">‹</button>
     <div class="cluetext" id="clueText"></div>
@@ -271,6 +291,16 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
     <button class="iconbtn close" id="sheetClose" aria-label="Cerrar">✕</button>
     <h3>Horizontales</h3><ol id="listA"></ol>
     <h3>Verticales</h3><ol id="listD"></ol>
+    <button class="quitbtn" id="quitBtn">Me rindo 🏳️</button>
+  </div>
+</div>
+
+<div class="sheet hidden" id="confirm">
+  <div class="sheet-in confirm-in">
+    <p><b>¿Segura/o que querés abandonar?</b></p>
+    <p style="font-size:15px;color:var(--soft)">No vas a poder seguir jugando ni entrar al ranking.</p>
+    <button class="btn ghost" id="quitNo">No, sigo</button>
+    <button class="btn" id="quitYes">Sí, abandono</button>
   </div>
 </div>
 
@@ -285,6 +315,17 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
   <p class="pill" id="finalTime" style="margin-top:6px"></p>
   <ol class="rank-list" id="finalList"></ol>
   <p class="conn" id="finalConn"></p>
+</section>
+
+<!-- ============ ABANDONO ============ -->
+<section id="quit" class="screen hidden">
+  <svg class="deco" style="left:-14px;top:40px;width:80px;height:80px;transform:rotate(-12deg)"><use href="#star"/></svg>
+  <svg class="deco" style="right:-20px;top:90px;width:76px;height:76px"><use href="#smile"/></svg>
+  <svg class="deco" style="right:30px;bottom:60px;width:110px;height:110px;opacity:.7"><use href="#burst"/></svg>
+  <div class="flag" aria-hidden="true">🏳️</div>
+  <p class="gas">Tiraste gaaaas, abandonasteeeee</p>
+  <button class="btn" id="seeAnswers">Ver respuestas correctas</button>
+  <button class="link" data-go="ranking">ver el ranking</button>
 </section>
 
 <!-- ============ RANKING ============ -->
@@ -347,7 +388,7 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
   // ---------- pantallas ----------
   let prevScreen = "intro";
   function show(id) {
-    ["intro", "game", "final", "ranking"].forEach((s) => $(s).classList.toggle("hidden", s !== id));
+    ["intro", "game", "final", "ranking", "quit"].forEach((s) => $(s).classList.toggle("hidden", s !== id));
     if (id !== "ranking") prevScreen = id;
     window.scrollTo(0, 0);
     if (id === "ranking" || id === "final") startFeed(); else stopFeed();
@@ -507,7 +548,7 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
     const upd = () => ($("timer").textContent = fmt((Date.now() - player.start) / 1000));
     upd(); tick = setInterval(upd, 1000);
   }
-  const finished = () => !!(player && player.done);
+  const finished = () => !!(player && (player.done || player.gaveUp));
 
   // ---------- ganar ----------
   async function win() {
@@ -626,7 +667,7 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
   });
   document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => {
     const go = b.dataset.go;
-    if (go === "back") show(prevScreen === "game" && player && !player.done ? "game" : player && player.done ? "final" : "intro");
+    if (go === "back") show(player && player.gaveUp ? "quit" : prevScreen === "game" && player && !player.done ? "game" : player && player.done ? "final" : "intro");
     else show(go);
   }));
   $("prevClue").addEventListener("click", () => moveClue(-1));
@@ -653,6 +694,43 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
     $("sheet").classList.remove("hidden");
   }
 
+  // ---------- abandonar ----------
+  $("quitBtn").addEventListener("click", () => { $("sheet").classList.add("hidden"); $("confirm").classList.remove("hidden"); });
+  $("quitNo").addEventListener("click", () => $("confirm").classList.add("hidden"));
+  $("confirm").addEventListener("click", (ev) => { if (ev.target === $("confirm")) $("confirm").classList.add("hidden"); });
+  $("quitYes").addEventListener("click", () => {
+    $("confirm").classList.add("hidden");
+    clearInterval(tick);
+    player.gaveUp = Date.now(); store.set("player", player);
+    show("quit");
+  });
+  function loadAnswers() {
+    if (window.RESPUESTAS) return Promise.resolve(window.RESPUESTAS);
+    return new Promise((ok, fail) => {
+      const sc = document.createElement("script");
+      sc.src = "respuestas.js"; sc.onload = () => ok(window.RESPUESTAS); sc.onerror = fail;
+      document.head.appendChild(sc);
+    });
+  }
+  async function showAnswers() {
+    let enc;
+    try { enc = await loadAnswers(); } catch (e) { toast("No pude cargar las respuestas, probá de nuevo"); return; }
+    const key = "flopicretense28", raw = atob(enc);
+    let sol = ""; for (let i = 0; i < raw.length; i++) sol += String.fromCharCode(raw.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    let i = 0;
+    for (let r = 0; r < R; r++) for (let c = 0; c < W; c++) if (isOn(r, c)) {
+      const k = r + "," + c, ch = sol[i++], el = cellEls[k];
+      el.querySelector(".ch").textContent = ch;
+      el.classList.toggle("miss", letters[k] !== ch);
+    }
+    $("game").classList.add("reveal");
+    $("quitBtn").classList.add("hidden");
+    show("game");
+    selectEntry(order[0]);
+  }
+  $("seeAnswers").addEventListener("click", showAnswers);
+  $("answersBack").addEventListener("click", () => show("quit"));
+
   function startGame() {
     show("game");
     Object.keys(letters).forEach((k) => cellEls[k] && renderCell(...k.split(",").map(Number)));
@@ -665,6 +743,7 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
   buildBoard(); buildKeyboard();
   if (params.has("ranking")) { $("backBtn").classList.add("hidden"); show("ranking"); }
   else if (player && player.done) { showFinal(); submit(); }
+  else if (player && player.gaveUp) show("quit");
   else if (player) startGame();
   else show("intro");
 })();
