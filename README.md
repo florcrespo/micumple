@@ -1,4 +1,4 @@
-# Crucigrama del cumple 28 🎉
+# Crucigrama Flopicretense 🎉
 
 Juego para el celular: cada invitado completa el crucigrama y los 2 primeros en terminarlo ganan.
 
