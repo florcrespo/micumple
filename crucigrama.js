@@ -138,7 +138,7 @@ window.CRUCIGRAMA = {
    "row": 16,
    "col": 0,
    "len": 4,
-   "clue": "A quien fui a ver el jueves (no es su nombre)",
+   "clue": "A quien fui a ver el jueves (no es su nombre) (ni su apellido)",
    "h": "8e4d22eb5e815ba9"
   },
   {
