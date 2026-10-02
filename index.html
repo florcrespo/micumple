@@ -136,6 +136,13 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
 .cluetext b { color: var(--red); margin-right: 6px; white-space: nowrap; }
 
 .kb { padding: 0 3px calc(6px + env(safe-area-inset-bottom)); user-select: none; }
+.kbtoggle {
+  display: block; margin: 0 auto 6px; background: #fff; border: 1.5px solid var(--ink); border-radius: 999px;
+  font: 500 14px Jost, sans-serif; padding: 4px 16px; cursor: pointer;
+}
+#game.kb-off .kb { display: none; }
+#game.kb-off .kbtoggle { margin-bottom: calc(10px + env(safe-area-inset-bottom)); padding: 8px 20px; font-size: 16px; }
+#game.reveal .kbtoggle { display: none; }
 .kb-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 5px; }
 .key {
   flex: 1; max-width: 42px; height: 46px; border: 0; border-radius: 8px;
@@ -283,6 +290,7 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
     <div class="cluetext" id="clueText"></div>
     <button id="nextClue" aria-label="Pista siguiente">›</button>
   </div>
+  <button class="kbtoggle" id="kbToggle" type="button">⌄ ocultar teclado</button>
   <div class="kb" id="kb"></div>
 </section>
 
@@ -448,7 +456,14 @@ input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--p
     dir = curEntry.dir; cur = [r, c];
     paint();
   }
+  function setKb(on) {
+    $("game").classList.toggle("kb-off", !on);
+    $("kbToggle").textContent = on ? "⌄ ocultar teclado" : "⌨️ mostrar teclado";
+    if (cur) paint();
+  }
+  $("kbToggle").addEventListener("click", () => setKb($("game").classList.contains("kb-off")));
   function tapCell(r, c) {
+    if (!finished() && $("game").classList.contains("kb-off")) setKb(true);
     if (cur && cur[0] === r && cur[1] === c && entriesAt(r, c).length > 1) select(r, c, dir === "A" ? "D" : "A");
     else select(r, c, dir);
   }
