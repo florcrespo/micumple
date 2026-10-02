@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Crucigrama de Flor</title>
+<meta name="theme-color" content="#f2efec">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fredoka:wght@500;600;700&family=Jost:wght@400;500;600&family=Rubik:wght@900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f2efec;
+  --ink: #1b1b1b;
+  --soft: #6f6a66;
+  --red: #b0141a;
+  --red-dark: #8c0f14;
+  --pink: #f5a3aa;
+  --pink-soft: #fbdde0;
+  --bead: #ffffff;
+  --line: #d9d3ce;
+  --ok: #2e7d4f;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--paper);
+  background-image: radial-gradient(rgba(0,0,0,.035) 1px, transparent 1px);
+  background-size: 5px 5px;
+  color: var(--ink);
+  font-family: Jost, system-ui, sans-serif;
+  overscroll-behavior: none;
+}
+button { font-family: inherit; color: inherit; }
+.hidden { display: none !important; }
+.script { font-family: Caveat, cursive; }
+
+/* ---------- decoraciones ---------- */
+.deco { position: absolute; pointer-events: none; z-index: 0; }
+.screen > :not(.deco) { position: relative; z-index: 1; }
+.screen { position: relative; min-height: 100%; overflow: hidden; }
+
+/* ---------- intro ---------- */
+#intro { display: flex; flex-direction: column; align-items: center; padding: 40px 16px 32px; text-align: center; }
+.veni { font-size: 34px; margin: 0 0 6px; transform: rotate(-2deg); }
+.beads { display: flex; gap: 4px; justify-content: center; flex-wrap: nowrap; }
+.bead {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 55%, #ebe7e3 100%);
+  box-shadow: 0 3px 0 #d8d2cc, 0 6px 10px rgba(0,0,0,.12);
+  display: grid; place-items: center;
+  font-family: Fredoka, sans-serif; font-weight: 700; font-size: 26px;
+}
+.bead:nth-child(odd) { color: var(--red); transform: translateY(-4px) rotate(-6deg); }
+.bead:nth-child(even) { color: var(--ink); transform: translateY(5px) rotate(5deg); }
+.sub { font-size: 30px; margin: 10px 0 0 120px; transform: rotate(-4deg); }
+.big28 {
+  font-family: Rubik, sans-serif; font-weight: 900; font-size: 110px; line-height: 1;
+  color: var(--red); margin: 8px 0 4px;
+  -webkit-text-stroke: 0; text-shadow: 0 0 0 #fff, 5px 5px 0 #fff, -5px -5px 0 #fff, 5px -5px 0 #fff, -5px 5px 0 #fff, 0 6px 0 #fff, 0 -6px 0 #fff, 6px 0 0 #fff, -6px 0 0 #fff, 0 10px 18px rgba(0,0,0,.12);
+}
+.rules { max-width: 330px; font-size: 16px; line-height: 1.45; margin: 6px 0 22px; }
+.rules b { color: var(--red); }
+.field { width: 100%; max-width: 320px; }
+.field label { display: block; font-family: Caveat, cursive; font-size: 24px; margin-bottom: 4px; }
+input[type=text] {
+  width: 100%; font: 500 20px Jost, sans-serif; text-align: center;
+  padding: 12px 14px; border-radius: 999px; border: 2px solid var(--ink);
+  background: #fff; color: var(--ink); outline: none;
+}
+input[type=text]:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--pink-soft); }
+.btn {
+  display: inline-block; border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--red); color: #fff; font: 600 20px Jost, sans-serif;
+  padding: 13px 34px; margin-top: 16px; box-shadow: 0 4px 0 var(--red-dark);
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--red-dark); }
+.btn:disabled { opacity: .45; }
+.btn.ghost { background: #fff; color: var(--ink); box-shadow: 0 3px 0 var(--line); border: 2px solid var(--ink); }
+.link { background: none; border: 0; text-decoration: underline; font-size: 16px; margin-top: 18px; cursor: pointer; color: var(--soft); }
+.note { font-size: 13px; color: var(--soft); max-width: 300px; margin-top: 22px; }
+
+/* ---------- juego ---------- */
+#game { display: flex; flex-direction: column; height: 100dvh; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: calc(8px + env(safe-area-inset-top)) 12px 6px;
+}
+.topbar .title { font-family: Caveat, cursive; font-size: 26px; line-height: 1; }
+.topbar .title span { color: var(--red); }
+.stats { display: flex; gap: 6px; align-items: center; }
+.pill {
+  font: 600 14px Jost, sans-serif; background: #fff; border: 1.5px solid var(--ink);
+  border-radius: 999px; padding: 3px 10px; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.iconbtn {
+  width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--ink); background: #fff;
+  font-size: 16px; display: grid; place-items: center; cursor: pointer; padding: 0;
+}
+.board-wrap { flex: 1; overflow: auto; padding: 4px 8px 12px; -webkit-overflow-scrolling: touch; }
+.board {
+  display: grid; gap: 2px; margin: 0 auto; width: max-content;
+}
+.cell {
+  position: relative; width: var(--cs); height: var(--cs);
+  border-radius: 22%; display: grid; place-items: center;
+  font-family: Fredoka, sans-serif; font-weight: 600; font-size: calc(var(--cs) * .58);
+  user-select: none; cursor: pointer; text-transform: uppercase;
+}
+.cell.on {
+  background: var(--bead); box-shadow: 0 1.5px 0 #d8d2cc, 0 2px 4px rgba(0,0,0,.08);
+  color: var(--ink);
+}
+.cell.on.word { background: var(--pink-soft); }
+.cell.on.sel { background: var(--red); color: #fff; box-shadow: 0 1.5px 0 var(--red-dark); }
+.cell.on.bad { background: #ffd2d2; color: var(--red); animation: shake .4s; }
+.cell.on.done { color: var(--red); }
+.cell .num {
+  position: absolute; top: 1px; left: 2px; font: 600 calc(var(--cs) * .28)/1 Jost, sans-serif;
+  color: var(--soft);
+}
+.cell.sel .num { color: #ffd9dc; }
+@keyframes shake { 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+
+.cluebar {
+  display: flex; align-items: stretch; gap: 6px; margin: 0 8px 6px;
+  background: #fff; border: 2px solid var(--ink); border-radius: 16px; min-height: 58px;
+}
+.cluebar button { background: none; border: 0; font-size: 22px; width: 38px; cursor: pointer; color: var(--red); }
+.cluetext { flex: 1; display: flex; align-items: center; font-size: 15px; line-height: 1.25; padding: 6px 0; cursor: pointer; }
+.cluetext b { color: var(--red); margin-right: 6px; white-space: nowrap; }
+
+.kb { padding: 0 3px calc(6px + env(safe-area-inset-bottom)); user-select: none; }
+.kb-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 5px; }
+.key {
+  flex: 1; max-width: 42px; height: 46px; border: 0; border-radius: 8px;
+  background: #fff; box-shadow: 0 2px 0 #cfc8c2; font: 600 19px Fredoka, sans-serif;
+  cursor: pointer; padding: 0; touch-action: manipulation;
+}
+.key:active { background: var(--pink); }
+.key.wide { flex: 1.6; max-width: 66px; font-size: 18px; }
+
+/* ---------- hoja de pistas ---------- */
+.sheet {
+  position: fixed; inset: 0; background: rgba(27,27,27,.35); display: flex; align-items: flex-end; z-index: 20;
+}
+.sheet-in {
+  background: var(--paper); width: 100%; max-height: 82dvh; overflow: auto;
+  border-radius: 22px 22px 0 0; padding: 14px 16px calc(20px + env(safe-area-inset-bottom));
+}
+.sheet h3 { font-family: Caveat, cursive; font-size: 30px; margin: 6px 0 4px; color: var(--red); }
+.sheet ol { list-style: none; padding: 0; margin: 0 0 8px; }
+.sheet li { padding: 8px 4px; border-bottom: 1px dashed var(--line); font-size: 15px; display: flex; gap: 8px; cursor: pointer; }
+.sheet li b { min-width: 24px; color: var(--red); }
+.sheet li.solved { color: var(--soft); text-decoration: line-through; }
+.sheet .close { float: right; }
+
+/* ---------- toast ---------- */
+.toast {
+  position: fixed; left: 50%; top: 70px; transform: translateX(-50%); z-index: 30;
+  background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 15px;
+  max-width: calc(100% - 32px); text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,.2);
+}
+
+/* ---------- final / ranking ---------- */
+#final, #ranking { display: flex; flex-direction: column; align-items: center; padding: 40px 16px 32px; text-align: center; }
+.place {
+  font-family: Rubik, sans-serif; font-weight: 900; font-size: 96px; line-height: 1; color: var(--red);
+  text-shadow: 5px 5px 0 #fff, -5px -5px 0 #fff, 5px -5px 0 #fff, -5px 5px 0 #fff, 0 6px 0 #fff, 0 -6px 0 #fff, 6px 0 0 #fff, -6px 0 0 #fff;
+}
+.final-msg { font-size: 19px; max-width: 320px; margin: 10px 0 4px; line-height: 1.4; }
+.h-script { font-family: Caveat, cursive; font-size: 40px; margin: 0; transform: rotate(-2deg); }
+.rank-list { list-style: none; padding: 0; margin: 18px 0 0; width: 100%; max-width: 360px; text-align: left; }
+.rank-list li {
+  display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 16px;
+  padding: 10px 14px; margin-bottom: 8px; box-shadow: 0 2px 0 var(--line);
+}
+.rank-list li.me { outline: 2px solid var(--red); }
+.rank-list .pos {
+  width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  font: 700 18px Fredoka, sans-serif; background: var(--paper);
+}
+.rank-list li.win .pos { background: var(--red); color: #fff; }
+.rank-list .nm { flex: 1; font-size: 18px; font-weight: 500; overflow-wrap: anywhere; }
+.rank-list .tm { font-size: 13px; color: var(--soft); text-align: right; font-variant-numeric: tabular-nums; }
+.empty { color: var(--soft); margin-top: 18px; }
+.conn { font-size: 12px; color: var(--soft); margin-top: 14px; }
+
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#c9c9c9"/>
+      <stop offset=".55" stop-color="#f7f7f7"/><stop offset=".8" stop-color="#8d8d8d"/><stop offset="1" stop-color="#e2e2e2"/>
+    </linearGradient>
+    <symbol id="star" viewBox="0 0 100 100">
+      <path d="M50 4 C55 30 62 36 96 38 C68 52 66 60 78 94 C58 74 46 72 20 92 C30 62 28 54 4 38 C36 36 44 30 50 4Z"
+            fill="url(#silver)" stroke="#1b1b1b" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M50 14 C52 32 56 40 70 44" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+    </symbol>
+    <symbol id="smile" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="46" fill="#d4d4d4" stroke="#bdbdbd" stroke-width="3"/>
+      <circle cx="36" cy="38" r="6" fill="#1b1b1b"/><circle cx="64" cy="38" r="6" fill="#1b1b1b"/>
+      <path d="M26 56 Q50 82 74 56" fill="none" stroke="#1b1b1b" stroke-width="5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="burst" viewBox="0 0 100 100">
+      <g stroke="#f5a3aa" stroke-width="5" stroke-linecap="round">
+        <line x1="50" y1="2" x2="50" y2="98"/><line x1="2" y1="50" x2="98" y2="50"/>
+        <line x1="16" y1="16" x2="84" y2="84"/><line x1="84" y1="16" x2="16" y2="84"/>
+        <line x1="30" y1="5" x2="70" y2="95"/><line x1="5" y1="70" x2="95" y2="30"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ============ INTRO ============ -->
+<section id="intro" class="screen hidden">
+  <svg class="deco" style="left:-20px;top:150px;width:90px;height:90px;transform:rotate(-14deg)"><use href="#star"/></svg>
+  <svg class="deco" style="right:-26px;top:120px;width:84px;height:84px"><use href="#smile"/></svg>
+  <svg class="deco" style="left:4px;top:20px;width:96px;height:96px;opacity:.8"><use href="#burst"/></svg>
+  <svg class="deco" style="right:6px;top:330px;width:60px;height:60px;transform:rotate(18deg)"><use href="#star"/></svg>
+
+  <p class="veni script">vení a jugar al</p>
+  <div class="beads" aria-label="CRUCI"><div class="bead">C</div><div class="bead">R</div><div class="bead">U</div><div class="bead">C</div><div class="bead">I</div></div>
+  <div class="beads" style="margin-top:10px" aria-label="GRAMA"><div class="bead">G</div><div class="bead">R</div><div class="bead">A</div><div class="bead">M</div><div class="bead">A</div></div>
+  <p class="sub script">de Flor</p>
+  <div class="big28" aria-hidden="true">28</div>
+  <p class="rules">28 palabras, 28 años. ¿Cuánto sabés de mí?<br><b>Los 2 primeros en completarlo ganan.</b></p>
+  <form id="startForm" class="field">
+    <label for="name">¿Cómo te llamás?</label>
+    <input id="name" type="text" maxlength="20" autocomplete="nickname" placeholder="Tu nombre" required>
+    <button class="btn" type="submit" id="startBtn">¡Empezar!</button>
+  </form>
+  <button class="link" data-go="ranking">ver el ranking</button>
+</section>
+
+<!-- ============ JUEGO ============ -->
+<section id="game" class="hidden">
+  <div class="topbar">
+    <div class="title">cruci<span>28</span></div>
+    <div class="stats">
+      <span class="pill" id="progress">0/28</span>
+      <span class="pill" id="timer">0:00</span>
+      <button class="iconbtn" id="zoomBtn" aria-label="Agrandar la grilla">🔍</button>
+      <button class="iconbtn" id="listBtn" aria-label="Ver todas las pistas">☰</button>
+    </div>
+  </div>
+  <div class="board-wrap" id="boardWrap"><div class="board" id="board"></div></div>
+  <div class="cluebar">
+    <button id="prevClue" aria-label="Pista anterior">‹</button>
+    <div class="cluetext" id="clueText"></div>
+    <button id="nextClue" aria-label="Pista siguiente">›</button>
+  </div>
+  <div class="kb" id="kb"></div>
+</section>
+
+<div class="sheet hidden" id="sheet">
+  <div class="sheet-in">
+    <button class="iconbtn close" id="sheetClose" aria-label="Cerrar">✕</button>
+    <h3>Horizontales</h3><ol id="listA"></ol>
+    <h3>Verticales</h3><ol id="listD"></ol>
+  </div>
+</div>
+
+<!-- ============ FINAL ============ -->
+<section id="final" class="screen hidden">
+  <svg class="deco" style="left:-14px;top:30px;width:80px;height:80px;transform:rotate(-12deg)"><use href="#star"/></svg>
+  <svg class="deco" style="right:-20px;top:70px;width:76px;height:76px"><use href="#smile"/></svg>
+  <svg class="deco" style="right:30px;top:10px;width:110px;height:110px;opacity:.7"><use href="#burst"/></svg>
+  <p class="h-script">¡lo completaste!</p>
+  <div class="place" id="finalPlace">…</div>
+  <p class="final-msg" id="finalMsg">Fijándome en qué puesto quedaste…</p>
+  <p class="pill" id="finalTime" style="margin-top:6px"></p>
+  <ol class="rank-list" id="finalList"></ol>
+  <p class="conn" id="finalConn"></p>
+</section>
+
+<!-- ============ RANKING ============ -->
+<section id="ranking" class="screen hidden">
+  <svg class="deco" style="left:-14px;top:30px;width:80px;height:80px;transform:rotate(-12deg)"><use href="#star"/></svg>
+  <svg class="deco" style="right:-20px;top:40px;width:76px;height:76px"><use href="#smile"/></svg>
+  <p class="h-script">ranking</p>
+  <div class="beads" style="margin-top:10px"><div class="bead">2</div><div class="bead">8</div></div>
+  <ol class="rank-list" id="rankList"></ol>
+  <p class="empty hidden" id="rankEmpty">Todavía nadie lo terminó…</p>
+  <p class="conn" id="rankConn"></p>
+  <button class="btn ghost" id="backBtn" data-go="back">volver</button>
+</section>
+
+<canvas id="confetti"></canvas>
+<div class="toast hidden" id="toast"></div>
+
+<script src="crucigrama.js"></script>
+<script>
+(() => {
+  "use strict";
+  const C = window.CRUCIGRAMA;
+  const params = new URLSearchParams(location.search);
+  // Sala del ranking: cambiala con ?sala=algo para hacer pruebas sin ensuciar el ranking real.
+  const SALA = (params.get("sala") || "fiesta").replace(/[^a-z0-9_-]/gi, "").slice(0, 20) || "fiesta";
+  const TOPIC = "cruci28-flor-r7k2qx9m-" + SALA;
+  const NTFY = "https://ntfy.sh/" + TOPIC;
+  const KEY = "cruci28:" + SALA + ":";
+
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(KEY + k)); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch (e) {} },
+  };
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- modelo ----------
+  const R = C.rows, W = C.cols;
+  const isOn = (r, c) => r >= 0 && c >= 0 && r < R && c < W && C.mask[r][c] === "#";
+  const entries = C.entries.map((e, i) => {
+    const cells = [];
+    for (let k = 0; k < e.len; k++) cells.push(e.dir === "A" ? [e.row, e.col + k] : [e.row + k, e.col]);
+    return { ...e, i, cells };
+  });
+  const order = entries.slice().sort((a, b) => (a.dir === b.dir ? a.n - b.n : a.dir === "A" ? -1 : 1));
+  const nums = {};
+  entries.forEach((e) => (nums[e.row + "," + e.col] = e.n));
+  const entriesAt = (r, c) => entries.filter((e) => e.cells.some(([y, x]) => y === r && x === c));
+
+  let letters = store.get("letters") || {};
+  let player = store.get("player");
+  let dir = "A", cur = null, curEntry = null;
+  const solvedWords = new Set();
+
+  async function sha(s) {
+    const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+    return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+  }
+  const wordOf = (e) => e.cells.map(([r, c]) => letters[r + "," + c] || "").join("");
+
+  // ---------- pantallas ----------
+  let prevScreen = "intro";
+  function show(id) {
+    ["intro", "game", "final", "ranking"].forEach((s) => $(s).classList.toggle("hidden", s !== id));
+    if (id !== "ranking") prevScreen = id;
+    window.scrollTo(0, 0);
+    if (id === "ranking" || id === "final") startFeed(); else stopFeed();
+  }
+
+  let toastT;
+  function toast(msg, ms = 2600) {
+    const t = $("toast");
+    t.textContent = msg; t.classList.remove("hidden");
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.add("hidden"), ms);
+  }
+
+  // ---------- grilla ----------
+  const cellEls = {};
+  let zoom = store.get("zoom") || 1;
+  function sizeBoard() {
+    const avail = Math.min(window.innerWidth, 640) - 16;
+    const cs = Math.max(18, Math.floor((avail - (W - 1) * 2) / W) * zoom);
+    $("board").style.setProperty("--cs", cs + "px");
+  }
+  function buildBoard() {
+    const b = $("board");
+    b.style.gridTemplateColumns = `repeat(${W}, var(--cs))`;
+    for (let r = 0; r < R; r++) for (let c = 0; c < W; c++) {
+      const d = document.createElement("div");
+      d.className = "cell" + (isOn(r, c) ? " on" : "");
+      if (isOn(r, c)) {
+        const k = r + "," + c;
+        if (nums[k]) { const n = document.createElement("span"); n.className = "num"; n.textContent = nums[k]; d.appendChild(n); }
+        const t = document.createElement("span"); t.className = "ch"; d.appendChild(t);
+        d.addEventListener("click", () => tapCell(r, c));
+        cellEls[k] = d;
+      }
+      b.appendChild(d);
+    }
+    sizeBoard();
+  }
+  function renderCell(r, c) {
+    const k = r + "," + c;
+    cellEls[k].querySelector(".ch").textContent = letters[k] || "";
+  }
+  function paint() {
+    Object.values(cellEls).forEach((el) => el.classList.remove("sel", "word"));
+    if (!curEntry) return;
+    curEntry.cells.forEach(([r, c]) => cellEls[r + "," + c].classList.add("word"));
+    cellEls[cur[0] + "," + cur[1]].classList.add("sel");
+    $("clueText").innerHTML = "";
+    const b = document.createElement("b");
+    b.textContent = curEntry.n + (curEntry.dir === "A" ? " →" : " ↓");
+    $("clueText").append(b, document.createTextNode(curEntry.clue));
+    const el = cellEls[cur[0] + "," + cur[1]];
+    el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+  }
+  function select(r, c, d) {
+    const opts = entriesAt(r, c);
+    curEntry = opts.find((e) => e.dir === d) || opts[0];
+    dir = curEntry.dir; cur = [r, c];
+    paint();
+  }
+  function tapCell(r, c) {
+    if (cur && cur[0] === r && cur[1] === c && entriesAt(r, c).length > 1) select(r, c, dir === "A" ? "D" : "A");
+    else select(r, c, dir);
+  }
+  function selectEntry(e) {
+    const empty = e.cells.find(([r, c]) => !letters[r + "," + c]) || e.cells[0];
+    dir = e.dir; curEntry = e; cur = empty; paint();
+  }
+  function moveClue(step) {
+    const i = order.indexOf(curEntry);
+    selectEntry(order[(i + step + order.length) % order.length]);
+  }
+
+  // ---------- teclado ----------
+  function buildKeyboard() {
+    const rows = ["QWERTYUIOP", "ASDFGHJKLÑ", "⇄ZXCVBNM⌫"];
+    rows.forEach((row) => {
+      const div = document.createElement("div"); div.className = "kb-row";
+      [...row].forEach((k) => {
+        const b = document.createElement("button");
+        b.className = "key" + (k === "⌫" || k === "⇄" ? " wide" : "");
+        b.textContent = k; b.type = "button";
+        if (k === "⇄") b.setAttribute("aria-label", "Cambiar dirección");
+        if (k === "⌫") b.setAttribute("aria-label", "Borrar");
+        b.addEventListener("pointerdown", (ev) => { ev.preventDefault(); press(k); });
+        div.appendChild(b);
+      });
+      $("kb").appendChild(div);
+    });
+  }
+  function press(k) {
+    if (!curEntry || finished()) return;
+    const idx = curEntry.cells.findIndex(([r, c]) => r === cur[0] && c === cur[1]);
+    if (k === "⇄") { if (entriesAt(...cur).length > 1) select(cur[0], cur[1], dir === "A" ? "D" : "A"); return; }
+    if (k === "⌫") {
+      const key = cur.join(",");
+      if (letters[key]) delete letters[key];
+      else if (idx > 0) { cur = curEntry.cells[idx - 1]; delete letters[cur.join(",")]; }
+      renderCell(...cur); afterChange(); paint(); return;
+    }
+    letters[cur.join(",")] = k; renderCell(...cur);
+    if (idx < curEntry.cells.length - 1) cur = curEntry.cells[idx + 1];
+    afterChange();
+    if (wordOf(curEntry).length === curEntry.len && idx === curEntry.cells.length - 1) {
+      // palabra llena: pasar a la siguiente con huecos
+      const i = order.indexOf(curEntry);
+      for (let s = 1; s <= order.length; s++) {
+        const n = order[(i + s) % order.length];
+        if (wordOf(n).length < n.len) { selectEntry(n); return; }
+      }
+    }
+    paint();
+  }
+  document.addEventListener("keydown", (ev) => {
+    if ($("game").classList.contains("hidden") || ev.metaKey || ev.ctrlKey) return;
+    const k = ev.key.toUpperCase();
+    if (/^[A-ZÑ]$/.test(k)) { press(k); ev.preventDefault(); }
+    else if (ev.key === "Backspace") { press("⌫"); ev.preventDefault(); }
+    else if (ev.key === " " ) { press("⇄"); ev.preventDefault(); }
+    else if (ev.key === "Enter" || ev.key === "Tab") { moveClue(ev.shiftKey ? -1 : 1); ev.preventDefault(); }
+  });
+
+  // ---------- progreso y validación ----------
+  let checking = false;
+  async function afterChange() {
+    store.set("letters", letters);
+    const filled = entries.filter((e) => wordOf(e).length === e.len);
+    $("progress").textContent = filled.length + "/" + entries.length;
+    const total = Object.keys(cellEls).length;
+    if (Object.keys(letters).length < total || checking || finished()) return;
+    checking = true;
+    const all = [];
+    for (let r = 0; r < R; r++) for (let c = 0; c < W; c++) if (isOn(r, c)) all.push(letters[r + "," + c]);
+    const ok = (await sha(all.join(""))) === C.hash;
+    if (ok) { checking = false; return win(); }
+    // marcar palabras con errores
+    let bad = 0;
+    for (const e of entries) {
+      if ((await sha(wordOf(e))).slice(0, 16) !== e.h) {
+        bad++;
+        e.cells.forEach(([r, c]) => {
+          const el = cellEls[r + "," + c];
+          el.classList.remove("bad"); void el.offsetWidth; el.classList.add("bad");
+          setTimeout(() => el.classList.remove("bad"), 2500);
+        });
+      }
+    }
+    toast(bad === 1 ? "¡Casi! Hay 1 palabra mal (en rojo)" : `¡Casi! Hay ${bad} palabras mal (en rojo)`, 3200);
+    checking = false;
+  }
+
+  // ---------- reloj ----------
+  let tick;
+  const fmt = (s) => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
+    return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(x).padStart(2, "0"); };
+  function startTimer() {
+    clearInterval(tick);
+    const upd = () => ($("timer").textContent = fmt((Date.now() - player.start) / 1000));
+    upd(); tick = setInterval(upd, 1000);
+  }
+  const finished = () => !!(player && player.done);
+
+  // ---------- ganar ----------
+  async function win() {
+    clearInterval(tick);
+    player.done = Date.now(); player.secs = Math.round((player.done - player.start) / 1000);
+    store.set("player", player);
+    Object.values(cellEls).forEach((el) => el.classList.add("done"));
+    confetti();
+    setTimeout(() => { showFinal(); submit(); }, 1200);
+  }
+  async function submit() {
+    if (player.sent) return;
+    $("finalConn").textContent = "Enviando tu resultado…";
+    for (let i = 0; i < 6; i++) {
+      try {
+        const res = await fetch(NTFY, { method: "POST", body: JSON.stringify({ id: player.id, name: player.name, secs: player.secs }) });
+        if (res.ok) { player.sent = true; store.set("player", player); $("finalConn").textContent = ""; refreshFeed(); return; }
+      } catch (e) {}
+      await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
+    }
+    $("finalConn").textContent = "No pude mandar tu resultado (¿sin señal?). Mostrale esta pantalla a Flor.";
+    setTimeout(submit, 15000);
+  }
+  function showFinal() {
+    show("final");
+    $("finalTime").textContent = "Tu tiempo: " + fmt(player.secs);
+  }
+
+  // ---------- ranking (ntfy.sh) ----------
+  let results = [], es = null, poll = null;
+  function addMsg(m) {
+    if (m.event && m.event !== "message") return;
+    let d; try { d = JSON.parse(m.message); } catch (e) { return; }
+    if (!d || typeof d.id !== "string" || typeof d.name !== "string") return;
+    if (results.some((x) => x.id === d.id)) return;
+    results.push({ id: d.id, name: d.name.slice(0, 20), secs: +d.secs || 0, time: m.time, seq: m.id });
+    results.sort((a, b) => a.time - b.time || a.secs - b.secs);
+    renderRanking();
+  }
+  async function refreshFeed() {
+    try {
+      const res = await fetch(NTFY + "/json?poll=1&since=all");
+      const txt = await res.text();
+      txt.split("\n").filter(Boolean).forEach((l) => { try { addMsg(JSON.parse(l)); } catch (e) {} });
+      setConn("");
+    } catch (e) { setConn("Sin conexión, reintentando…"); }
+  }
+  function startFeed() {
+    if (es || poll) return;
+    refreshFeed();
+    if ("EventSource" in window) {
+      es = new EventSource(NTFY + "/sse?since=all");
+      es.onmessage = (ev) => { try { addMsg(JSON.parse(ev.data)); setConn(""); } catch (e) {} };
+      es.onerror = () => setConn("Reconectando…");
+    } else poll = setInterval(refreshFeed, 20000);
+  }
+  function stopFeed() { if (es) es.close(); es = null; clearInterval(poll); poll = null; }
+  function setConn(t) { $("rankConn").textContent = t; if (!player || player.sent) $("finalConn").textContent = t; }
+
+  const medal = ["🥇", "🥈"];
+  function fillList(ol) {
+    ol.innerHTML = "";
+    results.forEach((r, i) => {
+      const li = document.createElement("li");
+      if (i < 2) li.classList.add("win");
+      if (player && r.id === player.id) li.classList.add("me");
+      const pos = document.createElement("span"); pos.className = "pos"; pos.textContent = i + 1;
+      const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = (medal[i] ? medal[i] + " " : "") + r.name;
+      const tm = document.createElement("span"); tm.className = "tm";
+      const at = new Date(r.time * 1000).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+      tm.innerHTML = ""; tm.append(document.createTextNode("terminó " + at), document.createElement("br"), document.createTextNode("en " + fmt(r.secs)));
+      li.append(pos, nm, tm); ol.appendChild(li);
+    });
+  }
+  function renderRanking() {
+    fillList($("rankList")); fillList($("finalList"));
+    $("rankEmpty").classList.toggle("hidden", results.length > 0);
+    if (player && player.done) {
+      const i = results.findIndex((r) => r.id === player.id);
+      if (i >= 0) {
+        $("finalPlace").textContent = (i + 1) + "°";
+        $("finalMsg").textContent = i === 0 ? "¡Ganaste! Sos quien más sabe de mí 🏆 Buscá a Flor para reclamar tu premio."
+          : i === 1 ? "¡Segundo puesto, también ganaste! 🥈 Buscá a Flor para reclamar tu premio."
+          : "¡Gracias por jugar! No llegaste al podio, pero te quiero igual ❤️";
+      }
+    }
+  }
+
+  // ---------- confetti ----------
+  function confetti() {
+    const cv = $("confetti"), ctx = cv.getContext("2d");
+    cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    const cols = ["#b0141a", "#f5a3aa", "#1b1b1b", "#c9c9c9", "#ffffff"];
+    const ps = Array.from({ length: 160 }, () => ({
+      x: innerWidth / 2, y: innerHeight * 0.35, vx: (Math.random() - 0.5) * 14, vy: -Math.random() * 14 - 4,
+      s: 5 + Math.random() * 7, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, c: cols[(Math.random() * cols.length) | 0],
+    }));
+    let t = 0;
+    (function frame() {
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      ps.forEach((p) => { p.vy += 0.35; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); });
+      if (++t < 200) requestAnimationFrame(frame); else ctx.clearRect(0, 0, innerWidth, innerHeight);
+    })();
+  }
+
+  // ---------- eventos ----------
+  $("startForm").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const name = $("name").value.trim().slice(0, 20);
+    if (!name) return;
+    player = { id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36), name, start: Date.now() };
+    store.set("player", player);
+    startGame();
+  });
+  document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => {
+    const go = b.dataset.go;
+    if (go === "back") show(prevScreen === "game" && player && !player.done ? "game" : player && player.done ? "final" : "intro");
+    else show(go);
+  }));
+  $("prevClue").addEventListener("click", () => moveClue(-1));
+  $("nextClue").addEventListener("click", () => moveClue(1));
+  $("clueText").addEventListener("click", () => { if (cur && entriesAt(...cur).length > 1) select(cur[0], cur[1], dir === "A" ? "D" : "A"); });
+  $("zoomBtn").addEventListener("click", () => { zoom = zoom === 1 ? 1.5 : 1; store.set("zoom", zoom); sizeBoard(); paint(); });
+  $("listBtn").addEventListener("click", openSheet);
+  $("sheetClose").addEventListener("click", () => $("sheet").classList.add("hidden"));
+  $("sheet").addEventListener("click", (ev) => { if (ev.target === $("sheet")) $("sheet").classList.add("hidden"); });
+  window.addEventListener("resize", sizeBoard);
+
+  function openSheet() {
+    ["A", "D"].forEach((d) => {
+      const ol = $("list" + d); ol.innerHTML = "";
+      order.filter((e) => e.dir === d).forEach((e) => {
+        const li = document.createElement("li");
+        if (wordOf(e).length === e.len) li.classList.add("solved");
+        const b = document.createElement("b"); b.textContent = e.n;
+        li.append(b, document.createTextNode(e.clue));
+        li.addEventListener("click", () => { $("sheet").classList.add("hidden"); selectEntry(e); });
+        ol.appendChild(li);
+      });
+    });
+    $("sheet").classList.remove("hidden");
+  }
+
+  function startGame() {
+    show("game");
+    Object.keys(letters).forEach((k) => cellEls[k] && renderCell(...k.split(",").map(Number)));
+    selectEntry(order[0]);
+    afterChange();
+    startTimer();
+  }
+
+  // ---------- arranque ----------
+  buildBoard(); buildKeyboard();
+  if (params.has("ranking")) { $("backBtn").classList.add("hidden"); show("ranking"); }
+  else if (player && player.done) { showFinal(); submit(); }
+  else if (player) startGame();
+  else show("intro");
+})();
+</script>
+</body>
+</html>
